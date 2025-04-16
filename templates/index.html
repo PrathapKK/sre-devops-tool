@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SRE Tool - CRUD UI</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 40px; }
+    h2 { color: #2c3e50; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background-color: #f2f2f2; }
+    form { margin-top: 20px; }
+    label { display: block; margin: 10px 0 5px; }
+    input, select { padding: 5px; width: 300px; }
+    button { margin-top: 10px; padding: 6px 12px; }
+  </style>
+</head>
+<body>
+  <h1>SRE DevOps Tool - CRUD Interface</h1>
+
+  <div>
+    <label for="entitySelect">Select Entity:</label>
+    <select id="entitySelect">
+      <option value="applications">Applications</option>
+      <option value="configurations">Configurations</option>
+      <option value="datacenters">Datacenters</option>
+      <option value="deployments">Deployments</option>
+      <option value="incidents">Incidents</option>
+      <option value="maintenance_windows">Maintenance Windows</option>
+      <option value="monitoring_configs">Monitoring Configs</option>
+      <option value="slo_tracking">SLO Tracking</option>
+      <option value="teams">Teams</option>
+      <option value="entity_ownership">Entity Ownership</option>
+      <option value="servers">Servers</option>
+      <option value="vips">VIPs</option>
+      <option value="database_servers">Database Servers</option>
+      <option value="microservices">Microservices</option>
+      <option value="vip_server_mappings">VIP-Server Mappings</option>
+      <option value="application_db_mappings">App-DB Mappings</option>
+      <option value="db_server_ip_mappings">DB Server IP Mappings</option>
+    </select>
+    <button onclick="fetchData()">Load Data</button>
+  </div>
+
+  <div id="dataSection">
+    <h2>Records</h2>
+    <table id="dataTable"></table>
+  </div>
+
+  <div id="formSection">
+    <h2>Create / Update Item</h2>
+    <form id="crudForm">
+      <label for="idField">ID (leave blank to create)</label>
+      <input type="number" id="idField" placeholder="ID" />
+      <label for="jsonData">JSON Payload</label>
+      <textarea id="jsonData" rows="10" style="width: 100%;"></textarea>
+      <br>
+      <button type="button" onclick="createOrUpdateItem()">Submit</button>
+      <button type="button" onclick="deleteItem()">Delete</button>
+    </form>
+  </div>
+
+  <script>
+    const baseUrl = "http://localhost:5000/api";
+
+    async function fetchData() {
+      const entity = document.getElementById("entitySelect").value;
+      const response = await fetch(`${baseUrl}/${entity}`);
+      const data = await response.json();
+      const table = document.getElementById("dataTable");
+
+      if (data.length === 0) {
+        table.innerHTML = "<tr><td>No records found.</td></tr>";
+        return;
+      }
+
+      const headers = Object.keys(data[0]);
+      let html = "<tr>" + headers.map(h => `<th>${h}</th>`).join("") + "</tr>";
+      html += data.map(row => "<tr>" + headers.map(h => `<td>${row[h]}</td>`).join("") + "</tr>").join("");
+      table.innerHTML = html;
+    }
+
+    async function createOrUpdateItem() {
+      const entity = document.getElementById("entitySelect").value;
+      const id = document.getElementById("idField").value;
+      const payload = JSON.parse(document.getElementById("jsonData").value);
+
+      const url = id ? `${baseUrl}/${entity}/${id}` : `${baseUrl}/${entity}`;
+      const method = id ? "PUT" : "POST";
+
+      const response = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const result = await response.json();
+      alert(JSON.stringify(result));
+      fetchData();
+    }
+
+    async function deleteItem() {
+      const entity = document.getElementById("entitySelect").value;
+      const id = document.getElementById("idField").value;
+      if (!id) return alert("Provide ID to delete.");
+
+      const response = await fetch(`${baseUrl}/${entity}/${id}`, {
+        method: "DELETE"
+      });
+      const result = await response.json();
+      alert(JSON.stringify(result));
+      fetchData();
+    }
+  </script>
+</body>
+</html>

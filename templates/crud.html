@@ -1,108 +1,154 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>{{ entity_name | capitalize }} Management</title>
-  <style>
-    body { font-family: Arial; margin: 20px; }
-    form { margin-bottom: 20px; }
-    input, select { margin: 5px; padding: 8px; }
-    table, th, td { border: 1px solid #ccc; border-collapse: collapse; padding: 10px; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRUD Operations</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
 
-  <h1>{{ entity_name | capitalize }} Management</h1>
+<h1>CRUD Operations</h1>
 
-  <h2>Create / Edit {{ entity_name | capitalize }}</h2>
-  <form id="crud-form">
+<!-- Form to add or update items -->
+<form id="crud-form">
+    <h2>Item Details</h2>
     {% for field_name, field in schema.fields.items() %}
-      {% if field_name != 'id' %}
-        <label>{{ field_name | capitalize }}:</label>
-        <input type="text" name="{{ field_name }}" required><br>
-      {% endif %}
+        <label for="{{ field_name }}">{{ field_name }}:</label>
+        <input type="text" id="{{ field_name }}" name="{{ field_name }}" required><br><br>
     {% endfor %}
     <button type="submit">Submit</button>
-  </form>
+</form>
 
-  <h2>{{ entity_name | capitalize }} List</h2>
-  <table id="data-table">
+<hr>
+
+<h2>Items List</h2>
+<!-- Table to display items dynamically -->
+<table id="items-table">
     <thead>
-      <tr>
-        {% for field_name in schema.fields %}
-          <th>{{ field_name }}</th>
-        {% endfor %}
-        <th>Actions</th>
-      </tr>
+        <tr>
+            {% for field_name in schema.fields %}
+                <th>{{ field_name }}</th>
+            {% endfor %}
+            <th>Actions</th>
+        </tr>
     </thead>
     <tbody>
+        {% for item in items %}
+            <tr>
+                {% for field_name in schema.fields %}
+                    <td>{{ item[field_name] if item[field_name] is not none else '' }}</td>
+                {% endfor %}
+                <td>
+                    <button onclick="editItem({{ item.id }})">Edit</button>
+                    <button onclick="deleteItem({{ item.id }})">Delete</button>
+                </td>
+            </tr>
+        {% endfor %}
     </tbody>
-  </table>
+</table>
 
-  <script>
-    const entity = "{{ entity_name }}";
-    const apiBase = `/api/${entity}`;
+<script>
+    // Assuming `items` is a JSON object passed from Flask to the template
+    const items = {{ items | tojson }};
+    const schemaFields = {{ schema.fields.keys() | tojson }};
+    
+    // Populate table dynamically
+    function renderTable() {
+        const tableBody = $('#items-table tbody');
+        tableBody.empty();
 
-    function fetchData() {
-      fetch(apiBase)
-        .then(res => res.json())
-        .then(data => {
-          const table = document.querySelector("#data-table tbody");
-          table.innerHTML = "";
-          data.forEach(item => {
-            let row = "<tr>";
-            {% for field_name in schema.fields %}
-              row += `<td>${item["{{ field_name }}"] ?? ""}</td>`;
-            {% endfor %}
-            row += `<td>
-                      <button onclick="editItem(${item.id})">Edit</button>
-                      <button onclick="deleteItem(${item.id})">Delete</button>
-                    </td>`;
-            row += "</tr>";
-            table.innerHTML += row;
-          });
+        items.forEach(item => {
+            const row = $('<tr></tr>');
+            schemaFields.forEach(field => {
+                row.append(`<td>${item[field] ?? ''}</td>`);
+            });
+            row.append(`
+                <td>
+                    <button onclick="editItem(${item.id})">Edit</button>
+                    <button onclick="deleteItem(${item.id})">Delete</button>
+                </td>
+            `);
+            tableBody.append(row);
         });
     }
 
-    function deleteItem(id) {
-      fetch(`${apiBase}/${id}`, { method: "DELETE" })
-        .then(() => fetchData());
-    }
+    // Submit form to create or update an item
+    $('#crud-form').submit(function(event) {
+        event.preventDefault();
 
-    function editItem(id) {
-      fetch(`${apiBase}/${id}`)
-        .then(res => res.json())
-        .then(item => {
-          document.querySelectorAll("#crud-form input").forEach(input => {
-            input.value = item[input.name] || "";
-          });
-          document.getElementById("crud-form").dataset.editingId = id;
+        const formData = {};
+        schemaFields.forEach(field => {
+            formData[field] = $(`#${field}`).val();
         });
-    }
 
-    document.getElementById("crud-form").addEventListener("submit", (e) => {
-      e.preventDefault();
-      const form = e.target;
-      const data = {};
-      form.querySelectorAll("input").forEach(input => {
-        data[input.name] = input.value;
-      });
-      const editingId = form.dataset.editingId;
-      const method = editingId ? "PUT" : "POST";
-      const url = editingId ? `${apiBase}/${editingId}` : apiBase;
+        const itemId = $('#crud-form').data('item-id'); // If editing, fetch item ID
 
-      fetch(url, {
-        method: method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data)
-      }).then(() => {
-        form.reset();
-        delete form.dataset.editingId;
-        fetchData();
-      });
+        if (itemId) {
+            // Update item
+            $.ajax({
+                url: `/api/${schema.name}/${itemId}`,
+                method: 'PUT',
+                contentType: 'application/json',
+                data: JSON.stringify(formData),
+                success: function() {
+                    alert('Item updated successfully');
+                    renderTable();
+                    $('#crud-form')[0].reset();
+                    $('#crud-form').removeData('item-id');
+                },
+                error: function() {
+                    alert('Error updating item');
+                }
+            });
+        } else {
+            // Create new item
+            $.ajax({
+                url: `/api/${schema.name}`,
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(formData),
+                success: function() {
+                    alert('Item created successfully');
+                    renderTable();
+                    $('#crud-form')[0].reset();
+                },
+                error: function() {
+                    alert('Error creating item');
+                }
+            });
+        }
     });
 
-    fetchData();
-  </script>
+    // Edit item (populate the form for editing)
+    function editItem(itemId) {
+        const item = items.find(item => item.id === itemId);
+        schemaFields.forEach(field => {
+            $(`#${field}`).val(item[field] ?? '');
+        });
+        $('#crud-form').data('item-id', itemId); // Store the item ID in form data
+    }
+
+    // Delete item
+    function deleteItem(itemId) {
+        if (confirm('Are you sure you want to delete this item?')) {
+            $.ajax({
+                url: `/api/${schema.name}/${itemId}`,
+                method: 'DELETE',
+                success: function() {
+                    alert('Item deleted successfully');
+                    renderTable();
+                },
+                error: function() {
+                    alert('Error deleting item');
+                }
+            });
+        }
+    }
+
+    // Initial render of the table
+    renderTable();
+</script>
+
 </body>
 </html>

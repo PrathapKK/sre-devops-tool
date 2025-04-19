@@ -1,0 +1,2 @@
+docker build -t your-dockerhub-username/sre-devops-tool:latest .
+docker push your-dockerhub-username/sre-devops-tool:latest

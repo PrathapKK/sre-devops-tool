@@ -7,3 +7,6 @@ flask-cors
 flask-migrate
 flask-jwt-extended
 flask_marshmallow
+pymysql
+mysqlclient
+gunicorn

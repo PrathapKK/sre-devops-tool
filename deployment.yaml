@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sre-devops-tool
+  labels:
+    app: sre-devops-tool
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: sre-devops-tool
+  template:
+    metadata:
+      labels:
+        app: sre-devops-tool
+    spec:
+      containers:
+      - name: sre-devops-tool
+        image: your-dockerhub-username/sre-devops-tool:latest
+        ports:
+        - containerPort: 5000
+        env:
+        - name: FLASK_ENV
+          value: production
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: db-secrets
+              key: database-url
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi

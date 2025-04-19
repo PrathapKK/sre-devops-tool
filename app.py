@@ -21,7 +21,7 @@ def create_app(config_name=None):
 
     # Configure CORS
     CORS(app, resources={r"/api/*": {"origins": "*"}})
-
+    
     # Configuration management
     if config_name == 'production':
         app.config.from_object('config.ProductionConfig')

@@ -8,7 +8,7 @@ import os
 db = SQLAlchemy()
 
 # Database URL
-DATABASE_URL = "mysql+pymysql://sredbtooluser:libPwdadmin%40512@localhost:3306/sredb"
+DATABASE_URL = "mysql+pymysql://sredbtooluser:<passwordforyourDB>@localhost:3306/sredb"
 
 # Create the SQLAlchemy engine for connecting to the MySQL database
 engine = create_engine(DATABASE_URL, echo=True)  # Set echo=True to log SQL queries

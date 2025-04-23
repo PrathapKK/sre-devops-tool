@@ -29,7 +29,7 @@ def create_app(config_name=None):
         app.config.from_object('config.TestingConfig')
     else:
         # Default development configuration
-        app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://sredbtooluser:libPwdadmin%40512@localhost:3306/sredb'
+        app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://sredbtooluser:<passwordforyourDB>@localhost:3306/sredb'
         app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
         app.config['SQLALCHEMY_ECHO'] = False  # SQL query logging
         app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-default-secret-key')

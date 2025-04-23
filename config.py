@@ -8,7 +8,7 @@ class Config:
 class DevelopmentConfig(Config):
     DEBUG = True
     SQLALCHEMY_ECHO = True
-    SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://sredbtooluser:libPwdadmin%40512@localhost:3306/sredb'
+    SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://sredbtooluser:<passwordforyourDB>@localhost:3306/sredb'
 
 class ProductionConfig(Config):
     DEBUG = False
